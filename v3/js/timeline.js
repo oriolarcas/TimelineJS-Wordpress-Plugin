@@ -3512,6 +3512,14 @@ TL.TimelineConfig = TL.Class.extend({
             }
         }
 
+        if (item_data.markerbackground) {
+            if (item_data.markerbackground.match(/^(https?:)?\/\/?/)) { // support http, https, protocol relative, site relative
+                d['marker_background'] = { 'url': item_data.markerbackground }
+            } else { // for now we'll trust it's a color
+                d['marker_background'] = { 'color': item_data.markerbackground }
+            }
+        }
+
         return d;
     }
 
@@ -11548,6 +11556,7 @@ TL.TimeMarker = TL.Class.extend({
 		this.data = {
 			unique_id: 			"",
 			background: 		null,
+            marker_background:    null,
 			date: {
 				year:			0,
 				month:			0,
@@ -11572,7 +11581,8 @@ TL.TimeMarker = TL.Class.extend({
 			ease: 				TL.Ease.easeInSpline,
 			width: 				600,
 			height: 			600,
-			marker_width_min: 	100 			// Minimum Marker Width
+			marker_width_min: 	100, 			// Minimum Marker Width
+			marker_bg:			false
 		};
 
 		// Actively Displaying
@@ -11691,7 +11701,7 @@ TL.TimeMarker = TL.Class.extend({
 			this._text.style.webkitLineClamp = text_lines;
 		} else {
 			text_lines = h / text_line_height;
-			if (text_lines > 1) {
+			if (text_lines > 1 && !this.options.marker_bg) {
 				this._text.className = "tl-headline tl-headline-fadeout";
 			} else {
 				this._text.className = "tl-headline";
@@ -11728,6 +11738,11 @@ TL.TimeMarker = TL.Class.extend({
 			//TL.DomUtil.removeClass(this._el.content_container, "tl-timemarker-content-container-small");
 		}
 	},
+
+    setColor: function(color) {
+        this._el.content_container.style.backgroundColor = color;
+        this._text.style.color = "#ffffff";
+    },
 
 	/*	Events
 	================================================== */
@@ -11792,6 +11807,11 @@ TL.TimeMarker = TL.Class.extend({
 			this._text.innerHTML		= TL.Util.unlinkify(this.data.media.caption);
 		}
 
+		// Background color
+        if (this.data.marker_background && this.data.marker_background.color) {
+			this.options.marker_bg = true;
+			this.setColor(this.data.marker_background.color);
+		}
 
 
 		// Fire event that the slide is loaded
@@ -11964,11 +11984,11 @@ TL.TimeEra = TL.Class.extend({
 			this._text.style.webkitLineClamp = text_lines;
 		} else {
 			text_lines = h / text_line_height;
-			if (text_lines > 1) {
-				this._text.className = "tl-headline tl-headline-fadeout";
-			} else {
+			//if (text_lines > 1) {
+			//	this._text.className = "tl-headline tl-headline-fadeout";
+			//} else {
 				this._text.className = "tl-headline";
-			}
+			//}
 			this._text.style.height = (text_lines * text_line_height)  + "px";
 		}
 
@@ -12002,7 +12022,11 @@ TL.TimeEra = TL.Class.extend({
 	},
 
 	setColor: function(color_num) {
-		this._el.container.className = 'tl-timeera tl-timeera-color' + color_num;
+		if (color.toString().substr(0, 1) == '#') {
+			this._el.container.style.backgroundColor = color;
+		} else {
+			this._el.container.className = 'tl-timeera tl-timeera-color' + color;
+		}
 	},
 
 	/*	Events
